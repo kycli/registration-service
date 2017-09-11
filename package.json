@@ -18,5 +18,8 @@
   "homepage": "https://github.com/kycli/registration-service#readme",
   "dependencies": {
     "express": "^4.15.4"
+  },
+  "devDependencies": {
+    "eslint": "^4.6.1"
   }
 }

@@ -4,11 +4,13 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var couchbase = require("couchbase");
 
 var index = require('./routes/index');
 var users = require('./routes/users');
 var entry = require('./routes/entry');
 var fetch = require('./routes/fetch');
+var config = require("./config");
 
 var app = express();
 var server = require('http').Server(app);

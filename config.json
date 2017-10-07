@@ -1,0 +1,6 @@
+{
+    "couchbase": {
+        "server": "centos01:8091",
+        "bucket": "web-chat"
+    }
+}

@@ -8,8 +8,14 @@ var bodyParser = require('body-parser');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var entry = require('./routes/entry');
+var fetch = require('./routes/fetch');
 
 var app = express();
+//var server = require("http").Server(app);
+var io = require("socket.io").listen(server);
+var chatModel = require("./database/chatmodel.js");
+
+module.exports.bucket = (new couchbase.Cluster(config.couchbase.server)).openBucket(config.couchbase.bucket);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -23,9 +29,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use("/scripts", express.static(__dirname + "/node_modules/"));
 app.use('/', index);
 app.use('/users', users);
 app.use('/entry', entry);
+app.use('/fetch', fetch);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -43,6 +51,17 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
+});
+
+io.on("connection", function(socket){
+  socket.on("chat_message", function(msg){
+    chatModel.create({message: msg}, function(error, result) {
+        if(error) {
+            console.log(JSON.stringify(error));
+        }
+        io.emit("chat_message", msg);
+    });
+  });
 });
 
 module.exports = app;

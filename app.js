@@ -11,7 +11,7 @@ var entry = require('./routes/entry');
 var fetch = require('./routes/fetch');
 
 var app = express();
-//var server = require("http").Server(app);
+var server = require('http').Server(app);
 var io = require("socket.io").listen(server);
 var chatModel = require("./database/chatmodel.js");
 

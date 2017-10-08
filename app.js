@@ -13,8 +13,7 @@ var fetch = require('./routes/fetch');
 var config = require("./config");
 
 var app = express();
-var server = require('http').Server(app);
-var io = require("socket.io").listen(server);
+
 var chatModel = require("./database/chatmodel.js");
 
 module.exports.bucket = (new couchbase.Cluster(config.couchbase.server)).openBucket(config.couchbase.bucket);
@@ -53,17 +52,6 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render('error');
-});
-
-io.on("connection", function(socket){
-  socket.on("chat_message", function(msg){
-    chatModel.create({message: msg}, function(error, result) {
-        if(error) {
-            console.log(JSON.stringify(error));
-        }
-        io.emit("chat_message", msg);
-    });
-  });
 });
 
 module.exports = app;

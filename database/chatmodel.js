@@ -1,5 +1,5 @@
 var uuid = require("uuid");
-var db = require("../app").bucket;
+var db = require("../app");
 var config = require("../config");
 var N1qlQuery = require('couchbase').N1qlQuery;
 
@@ -10,7 +10,7 @@ ChatModel.create = function(data, callback) {
         id: uuid.v4(),
         message: data.message
     };
-    db.insert("chat::" + chatMessage.id, chatMessage, function(error, result) {
+    db.bucket.insert("chat::" + chatMessage.id, chatMessage, function(error, result) {
         if(error) {
             return callback(error, null);
         }
@@ -21,8 +21,8 @@ ChatModel.create = function(data, callback) {
 ChatModel.getAll = function(callback) {
     var statement = "SELECT id, message " +
                     "FROM `" + config.couchbase.bucket + "`";
-    var query = N1qlQuery.fromString(statement).consistency(N1qlQuery.Consistency.REQUEST_PLUS);
-    db.query(query, function(error, result) {
+    var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
+    db.bucket.query(query, function(error, result) {
         if(error) {
             return callback(error, null);
         }

@@ -29,38 +29,56 @@ ChatModel.createOrAppend = function(data, callback) {
     var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
     db.bucket.query(query, function(error, docId) {
         if(error) {
-        return callback(error, null);
+          return callback(error, null);
         }
+        if (!!docId) {
+            msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+            msgDocument = [msgRecord];
+            docId = "chat~" + uuid.v4();
+            db.bucket.insert(docId, msgDocument, function(error, result) {
+                if(error) {
+                    return callback(error, null);
+                }
+                return callback(null, result);
+            });
+        }
+        else {
+            
+            db.bucket.get(docId, function(error, result) {
+                if (error) {
+                    //return callback(error, null);
+                    throw error;
+                }
+                console.log("existing data: " + result.value);
+                if (!!docId) {
+                    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+                    msgDocument = [msgRecord];
+                    docId = "chat~" + uuid.v4();
+                    db.bucket.insert(docId, msgDocument, function(error, result) {
+                        if(error) {
+                            return callback(error, null);
+                        }
+                        return callback(null, result);
+                    });
+                }
+                else {
+                    db.bucket.get(docId, function(error, result) {
+                        if (error) {
+                            //return callback(error, null);
+                            throw error;
+                        }
+                        console.log("existing data: " + result.value);
+                    });
+                    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+                    msgDocument = result.push(msgRecord)
+            
+                    db.bucket.upsert(docId, msgDocument, function(error, result) {
+                        if (error) throw error;
+                    });
+                }           
+            });  
+        }    
     });
-
-    if (!!docId) {
-        msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-        msgDocument = [msgRecord];
-        docId = "chat~" + uuid.v4();
-        db.bucket.insert(docId, msgDocument, function(error, result) {
-            if(error) {
-                return callback(error, null);
-            }
-            return callback(null, result);
-        });
-    }
-    else {
-        msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-        db.bucket.get(docId, function(error, result) {
-            if (error) {
-                //return callback(error, null);
-                throw error;
-            }
-            console.log("existing data: " + result.value);
-        });
-
-        msgDocument = result.push(msgRecord)
-
-        db.bucket.upsert(docId, msgDocument, function(error, result) {
-            if (error) throw error;
-        });
-        
-    }
 }
 
 ChatModel.getAll = function(callback) {

@@ -7,12 +7,10 @@ var N1qlQuery = require('couchbase').N1qlQuery;
 function ChatModel() { };
 
 ChatModel.create = function(data, callback) {
-    var chatMessage = {
-        id: uuid.v4(),
-        sessionId: data.sessionId,
-        message: data.message
-    };
-    db.bucket.insert("chat::" + chatMessage.id, chatMessage, function(error, result) {
+    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+    msgDocument = {"sessionId": data.sessionId, "sessionContent": [msgRecord]};
+    docId = "chat~" + uuid.v4();
+    db.bucket.insert(docId, msgDocument, function(error, result) {
         if(error) {
             return callback(error, null);
         }
@@ -29,53 +27,30 @@ ChatModel.createOrAppend = function(data, callback) {
     var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
     db.bucket.query(query, function(error, docId) {
         if(error) {
-          return callback(error, null);
+            return callback(error, null);
         }
         if (!!docId) {
-            msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-            msgDocument = [msgRecord];
-            docId = "chat~" + uuid.v4();
-            db.bucket.insert(docId, msgDocument, function(error, result) {
-                if(error) {
-                    return callback(error, null);
-                }
-                return callback(null, result);
-            });
+            return createImageBitmap(data, callback);
         }
         else {
-            
             db.bucket.get(docId, function(error, result) {
                 if (error) {
-                    //return callback(error, null);
                     throw error;
                 }
                 console.log("existing data: " + result.value);
-                if (!!docId) {
-                    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-                    msgDocument = [msgRecord];
-                    docId = "chat~" + uuid.v4();
-                    db.bucket.insert(docId, msgDocument, function(error, result) {
-                        if(error) {
-                            return callback(error, null);
-                        }
-                        return callback(null, result);
-                    });
-                }
-                else {
-                    db.bucket.get(docId, function(error, result) {
-                        if (error) {
-                            //return callback(error, null);
-                            throw error;
-                        }
-                        console.log("existing data: " + result.value);
-                    });
-                    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-                    msgDocument = result.push(msgRecord)
-            
-                    db.bucket.upsert(docId, msgDocument, function(error, result) {
-                        if (error) throw error;
-                    });
-                }           
+                db.bucket.get(docId, function(error, result) {
+                    if (error) {
+                        //return callback(error, null);
+                        throw error;
+                    }
+                    console.log("existing data: " + result.value);
+                });
+                msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+                msgDocument = result.push(msgRecord)
+        
+                db.bucket.upsert(docId, msgDocument, function(error, result) {
+                    if (error) throw error;
+                });   
             });  
         }    
     });

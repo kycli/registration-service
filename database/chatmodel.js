@@ -26,25 +26,27 @@ ChatModel.createOrAppend = function(data, callback) {
                     "ORDER BY id DESC LIMIT 1";
 
     var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
-    db.bucket.query(query, function(error, check) {
+    db.bucket.query(query, function(error, result1) {
         if(error) {
             return callback(error, null);
         }
-        if (!!check) {
+        if ( result1.length==0) {
             return ChatModel.create(data, callback);
         }
         else {
-            db.bucket.get(check.id, function(error, result) {
+            db.bucket.get(result1[0].id, function(error, result) {
                 if (error) {
                     throw error;
                 }
-                console.log("existing data: " + result.value);
+                cconsole.log("existing data: " + JSON.stringify(result));
 
                 msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-                msgDocument = result.push(msgRecord)
+                mcount = result.value.sessionContent.push(msgRecord)
+                msgDocument = result;
         
-                db.bucket.upsert(docId, msgDocument, function(error, result) {
+                db.bucket.upsert(result.value.id, msgDocument, function(error, result) {
                     if (error) throw error;
+                    return callback(null, result);
                 });   
             });  
         }    

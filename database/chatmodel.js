@@ -7,9 +7,10 @@ var N1qlQuery = require('couchbase').N1qlQuery;
 function ChatModel() { };
 
 ChatModel.create = function(data, callback) {
-    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
-    msgDocument = {"sessionId": data.sessionId, "sessionContent": [msgRecord]};
     docId = "chat~" + uuid.v4();
+    msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
+    msgDocument = {"id": docId, "sessionId": data.sessionId, "sessionContent": [msgRecord]};
+    
     db.bucket.insert(docId, msgDocument, function(error, result) {
         if(error) {
             return callback(error, null);
@@ -19,32 +20,26 @@ ChatModel.create = function(data, callback) {
 }
 
 ChatModel.createOrAppend = function(data, callback) {
-    var statement = "SELECT id, message " +
+    var statement = "SELECT id, sessionContent " +
                     "FROM `" + config.couchbase.bucket + "`" +
                     "WHERE sessionId = '" + data.sessionId + "'" +
                     "ORDER BY id DESC LIMIT 1";
 
     var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
-    db.bucket.query(query, function(error, docId) {
+    db.bucket.query(query, function(error, check) {
         if(error) {
             return callback(error, null);
         }
-        if (!!docId) {
-            return createImageBitmap(data, callback);
+        if (!!check) {
+            return ChatModel.create(data, callback);
         }
         else {
-            db.bucket.get(docId, function(error, result) {
+            db.bucket.get(check.id, function(error, result) {
                 if (error) {
                     throw error;
                 }
                 console.log("existing data: " + result.value);
-                db.bucket.get(docId, function(error, result) {
-                    if (error) {
-                        //return callback(error, null);
-                        throw error;
-                    }
-                    console.log("existing data: " + result.value);
-                });
+
                 msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
                 msgDocument = result.push(msgRecord)
         
@@ -69,7 +64,7 @@ ChatModel.getAll = function(callback) {
 };
 
 ChatModel.getSessionAll = function(sessionId, callback) {
-    var statement = "SELECT id, message " +
+    var statement = "SELECT sessionContent " +
                     "FROM `" + config.couchbase.bucket + "`" +
                     "WHERE sessionId = '" + sessionId + "'";
 

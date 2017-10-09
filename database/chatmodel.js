@@ -8,6 +8,7 @@ function ChatModel() { };
 ChatModel.create = function(data, callback) {
     var chatMessage = {
         id: uuid.v4(),
+        sessionId: data.sessionId,
         message: data.message
     };
     db.bucket.insert("chat::" + chatMessage.id, chatMessage, function(error, result) {

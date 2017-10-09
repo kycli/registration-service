@@ -38,9 +38,9 @@ ioSocket.on("connection", function(socket){
   console.log("socket.rooms: "+JSON.stringify(socket.rooms));
   console.log("socket.handshake: "+JSON.stringify(socket.handshake));
   
-  socket.on("chat_message", function(sessionId, msg){
+  socket.on("chat_message", function(sid, msg){
 
-    chatModel.create({sessionId: socket.handshake.address,message: msg}, function(error, result) {
+    chatModel.createOrAppend({sessionId: socket.handshake.address,message: msg}, function(error, result) {
       if(error) {
         console.log(JSON.stringify(error));
       }

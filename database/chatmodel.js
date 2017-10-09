@@ -75,6 +75,8 @@ ChatModel.getSessionAll = function(sessionId, callback) {
         if(error) {
             return callback(error, null);
         }
+        console.log(statement);
+        console.log("reuslts: "+JSON.stringify(result));
         callback(null, result);
     });
 };

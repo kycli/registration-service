@@ -21,6 +21,7 @@ app.set('port', port);
 
 var server = http.createServer(app);
 var ioSocket = require("socket.io")(server);
+var chatModel = require("../database/chatmodel.js");
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -30,17 +31,26 @@ var ioSocket = require("socket.io")(server);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
 ioSocket.on("connection", function(socket){
-  socket.on("chat_message", function(msg){
+
+  console.log("socket.id: "+socket.id);
+  console.log("socket.rooms: "+JSON.stringify(socket.rooms));
+  console.log("socket.client: "+JSON.stringify(socket.client));
+  console.log("socket.conn: "+JSON.stringify(socket.conn));
+  console.log("socket.request: "+JSON.stringify(socket.request));
+  console.log("socket.handshake: "+JSON.stringify(socket.handshake));
+  
+  socket.on("chat_message", function(id, msg){
+
     chatModel.create({message: msg}, function(error, result) {
-        if(error) {
-            console.log(JSON.stringify(error));
-        }
-        io.emit("chat_message", msg);
+      if(error) {
+        console.log(JSON.stringify(error));
+      }
+      ioSocket.to(socket.id).emit("chat_message", socket.handshake.address, msg);
     });
   });
 });
-
 
 /**
  * Normalize a port into a number, string, or false.

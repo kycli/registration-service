@@ -31,4 +31,17 @@ ChatModel.getAll = function(callback) {
     });
 };
 
+ChatModel.getSessionAll = function(sessionId, callback) {
+    var statement = "SELECT id, message " +
+                    "FROM `" + config.couchbase.bucket + "`" +
+                    "WHERE sessionId = '" + sessionId + "'";
+
+    var query = N1qlQuery.fromString(statement);//.consistency(N1qlQuery.Consistency.REQUEST_PLUS);
+    db.bucket.query(query, function(error, result) {
+        if(error) {
+            return callback(error, null);
+        }
+        callback(null, result);
+    });
+};
 module.exports = ChatModel;

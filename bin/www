@@ -36,12 +36,9 @@ ioSocket.on("connection", function(socket){
 
   console.log("socket.id: "+socket.id);
   console.log("socket.rooms: "+JSON.stringify(socket.rooms));
-  console.log("socket.client: "+JSON.stringify(socket.client));
-  console.log("socket.conn: "+JSON.stringify(socket.conn));
-  console.log("socket.request: "+JSON.stringify(socket.request));
   console.log("socket.handshake: "+JSON.stringify(socket.handshake));
   
-  socket.on("chat_message", function(id, msg){
+  socket.on("chat_message", function(sessionId, msg){
 
     chatModel.create({sessionId: socket.handshake.address,message: msg}, function(error, result) {
       if(error) {

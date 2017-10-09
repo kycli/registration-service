@@ -38,13 +38,13 @@ ChatModel.createOrAppend = function(data, callback) {
                 if (error) {
                     throw error;
                 }
-                cconsole.log("existing data: " + JSON.stringify(result));
+                console.log("existing data: " + JSON.stringify(result));
 
                 msgRecord = {"recTimestamp": Date.now(), "msgContent": data.message};
                 mcount = result.value.sessionContent.push(msgRecord)
                 msgDocument = result;
         
-                db.bucket.upsert(result.value.id, msgDocument, function(error, result) {
+                db.bucket.upsert(msgDocument.value.id, msgDocument.value, function(error, result) {
                     if (error) throw error;
                     return callback(null, result);
                 });   
